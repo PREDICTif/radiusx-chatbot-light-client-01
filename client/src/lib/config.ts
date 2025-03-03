@@ -2,13 +2,15 @@
 const isBrowser = typeof window !== 'undefined';
 let envApiKey = '';
 let envEndpoint = '';
-let envRegion = '';
+let envHeaderName = '';
+let envUseMockResponses = false;
 
 // Use import.meta.env only in browser environment
 if (isBrowser && import.meta && import.meta.env) {
-  envApiKey = import.meta.env.VITE_AWS_BEDROCK_API_KEY || '';
-  envEndpoint = import.meta.env.VITE_AWS_BEDROCK_ENDPOINT || '';
-  envRegion = import.meta.env.VITE_AWS_REGION || '';
+  envApiKey = import.meta.env.VITE_API_KEY || '';
+  envEndpoint = import.meta.env.VITE_API_ENDPOINT || '';
+  envHeaderName = import.meta.env.VITE_API_HEADER_NAME || '';
+  envUseMockResponses = import.meta.env.VITE_USE_MOCK_RESPONSES === 'true';
 }
 
 // API Configuration
@@ -17,12 +19,12 @@ export const config = {
   api: {
     apiKey: envApiKey || 'H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8', // Default API key
     endpoint: envEndpoint || 'https://7pg9r2dlcc.execute-api.us-east-1.amazonaws.com/api',
-    headerName: 'x-api-key', // Header name for API key
+    headerName: envHeaderName || 'x-api-key', // Header name for API key
   },
   
   // Feature flags
   features: {
-    useMockResponses: false, // Set to true to use mock responses instead of real API
+    useMockResponses: envUseMockResponses, // Set to true to use mock responses instead of real API
   },
   
   // Claude model IDs

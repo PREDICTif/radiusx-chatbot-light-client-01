@@ -70,8 +70,38 @@ export class ClaudeApi {
         throw new Error(`API Error: ${response.status} - ${errorText}`);
       }
       
-      const result = await response.json();
-      return result.completion || result.content || "No response from API";
+      // Parse the API response
+      if (response.status === 200) {
+        // Initial message creation returns messageId and conversationId
+        const initialResponse = await response.json();
+        if (initialResponse.conversationId && initialResponse.messageId) {
+          // We need to fetch the actual assistant response
+          const messageUrl = `${this.endpoint}/conversation/${initialResponse.conversationId}/${initialResponse.messageId}`;
+          const messageResponse = await fetch(messageUrl, {
+            method: 'GET',
+            headers
+          });
+          
+          if (messageResponse.ok) {
+            const messageData = await messageResponse.json();
+            // Extract text content from the response
+            if (messageData.message && 
+                messageData.message.content && 
+                messageData.message.content.length > 0) {
+              // Find the text content
+              const textContent = messageData.message.content.find(
+                (item: any) => item.contentType === 'text'
+              );
+              if (textContent && textContent.body) {
+                return textContent.body;
+              }
+            }
+          }
+          return "Retrieved message but couldn't extract content";
+        }
+        return "No proper response from API";
+      }
+      return "Failed to get a valid response from API";
       
     } catch (error) {
       console.error('Error calling Claude API:', error);
