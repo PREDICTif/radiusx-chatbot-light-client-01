@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import { Link, useLocation } from 'wouter';
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -7,6 +8,8 @@ interface AppHeaderProps {
 }
 
 const AppHeader: FC<AppHeaderProps> = ({ toggleSidebar, toggleDarkMode, darkMode }) => {
+  const [location] = useLocation();
+
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 flex items-center px-4 z-10">
       <button 
@@ -16,15 +19,22 @@ const AppHeader: FC<AppHeaderProps> = ({ toggleSidebar, toggleDarkMode, darkMode
       >
         <i className="fas fa-bars text-xl"></i>
       </button>
-      <div className="flex items-center ml-3 md:ml-0">
-        <img 
-          src="https://images.unsplash.com/photo-1693520999631-6ac145c1dd15?q=80&w=32&h=32&auto=format&fit=crop" 
-          alt="Claude AI Logo" 
-          className="h-8 w-8 rounded-md mr-2"
-        />
-        <h1 className="text-xl font-semibold">Claude AI</h1>
-      </div>
+      <Link href="/">
+        <a className="flex items-center ml-3 md:ml-0 cursor-pointer">
+          <img 
+            src="https://images.unsplash.com/photo-1693520999631-6ac145c1dd15?q=80&w=32&h=32&auto=format&fit=crop" 
+            alt="Claude AI Logo" 
+            className="h-8 w-8 rounded-md mr-2"
+          />
+          <h1 className="text-xl font-semibold">Claude AI</h1>
+        </a>
+      </Link>
       <div className="ml-auto flex items-center gap-3">
+        <Link href="/settings">
+          <a className={`text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary p-2 rounded-full ${location === '/settings' ? 'text-primary dark:text-primary' : ''}`}>
+            <i className="fas fa-cog text-lg"></i>
+          </a>
+        </Link>
         <button 
           onClick={toggleDarkMode}
           className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary p-2 rounded-full" 
