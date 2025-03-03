@@ -1,6 +1,11 @@
 import fetch from 'node-fetch';
 
-// Test function for Claude API integration
+/**
+ * This script tests the Claude API integration through our proxy server
+ * It performs a two-step process:
+ * 1. Sends a message to create a conversation and get message ID
+ * 2. Retrieves the message content using the conversation and message IDs
+ */
 async function testClaudeApi() {
   try {
     console.log('Starting Claude API integration test...');
