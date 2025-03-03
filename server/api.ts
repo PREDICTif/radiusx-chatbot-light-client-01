@@ -81,7 +81,10 @@ export class ClaudeApi {
         console.log('Initial response:', JSON.stringify(initialResponse));
         
         if (initialResponse.conversationId && initialResponse.messageId) {
-          // We need to fetch the actual assistant response (this will be the assistant's message)
+          // We need to wait a brief moment to ensure the message is available
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Then fetch the actual assistant response (this will be the assistant's message)
           const messageUrl = `${this.endpoint}/conversation/${initialResponse.conversationId}/${initialResponse.messageId}`;
           console.log('Fetching message from:', messageUrl);
           
@@ -104,10 +107,46 @@ export class ClaudeApi {
               );
               
               if (textContent && textContent.body) {
+                // Return the full response for more complete processing
                 return textContent.body;
               }
             }
+            
+            // Fallback: Return the entire response as a string if we can't extract content properly
+            return JSON.stringify(messageData);
           } else {
+            // If we get a 404, implement retry mechanism with delay
+            if (messageResponse.status === 404) {
+              console.log('Message not ready yet, retrying in 1.5 seconds...');
+              // Wait longer before retry
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
+              // Retry the request
+              const retryResponse = await fetch(messageUrl, {
+                method: 'GET',
+                headers
+              });
+              
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                console.log('Retry message response:', JSON.stringify(retryData));
+                
+                if (retryData.message && 
+                    retryData.message.content && 
+                    retryData.message.content.length > 0) {
+                  const textContent = retryData.message.content.find(
+                    (item: any) => item.contentType === 'text'
+                  );
+                  
+                  if (textContent && textContent.body) {
+                    return textContent.body;
+                  }
+                }
+                
+                return JSON.stringify(retryData);
+              }
+            }
+            
             const errorText = await messageResponse.text();
             console.error(`Error fetching message: ${messageResponse.status} - ${errorText}`);
             return `Error getting Claude response: ${messageResponse.status}`;
