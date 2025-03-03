@@ -20,20 +20,20 @@ const AppHeader: FC<AppHeaderProps> = ({ toggleSidebar, toggleDarkMode, darkMode
         <i className="fas fa-bars text-xl"></i>
       </button>
       <Link href="/">
-        <a className="flex items-center ml-3 md:ml-0 cursor-pointer">
+        <div className="flex items-center ml-3 md:ml-0 cursor-pointer">
           <img 
             src="https://images.unsplash.com/photo-1693520999631-6ac145c1dd15?q=80&w=32&h=32&auto=format&fit=crop" 
             alt="Claude AI Logo" 
             className="h-8 w-8 rounded-md mr-2"
           />
           <h1 className="text-xl font-semibold">Claude AI</h1>
-        </a>
+        </div>
       </Link>
       <div className="ml-auto flex items-center gap-3">
         <Link href="/settings">
-          <a className={`text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary p-2 rounded-full ${location === '/settings' ? 'text-primary dark:text-primary' : ''}`}>
+          <div className={`text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary p-2 rounded-full ${location === '/settings' ? 'text-primary dark:text-primary' : ''}`}>
             <i className="fas fa-cog text-lg"></i>
-          </a>
+          </div>
         </Link>
         <button 
           onClick={toggleDarkMode}
