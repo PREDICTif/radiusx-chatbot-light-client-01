@@ -45,12 +45,18 @@ export class ClaudeApi {
       // Add the API key with the specified header name
       headers[this.headerName] = this.apiKey;
       
-      // Format request according to Claude API
+      // Format request according to Claude API - following the OpenAPI spec
       const requestBody = {
-        model: model,
-        prompt: prompt,
-        temperature: 0.7,
-        max_tokens: 1024
+        conversationId: null,
+        message: {
+          content: [
+            {
+              contentType: "text",
+              body: prompt
+            }
+          ],
+          model: model
+        }
       };
       
       const response = await fetch(url, {

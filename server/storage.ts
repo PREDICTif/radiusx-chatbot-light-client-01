@@ -193,8 +193,8 @@ export class MemStorage implements IStorage {
     };
     
     try {
-      // Get response from BedrockApi (uses mock response if configured)
-      const responseContent = await bedrockApi.sendMessage(userInput, model);
+      // Get response from ClaudeApi (uses mock response if configured)
+      const responseContent = await claudeApi.sendMessage(userInput, model);
       
       // Create assistant message
       const assistantMessage: Message = {
