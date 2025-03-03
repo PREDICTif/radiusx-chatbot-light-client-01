@@ -1,20 +1,14 @@
-const API_ENDPOINT = "https://7pg9r2dlcc.execute-api.us-east-1.amazonaws.com/api";
-const API_KEY = "H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8";
-
+// Use local API server
 export async function apiRequest(
   method: string,
   path: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const url = `${API_ENDPOINT}${path}`;
+  const url = `/api${path}`;
   
   const headers: HeadersInit = {
-    'x-api-key': API_KEY,
+    'Content-Type': 'application/json',
   };
-  
-  if (data) {
-    headers['Content-Type'] = 'application/json';
-  }
   
   const res = await fetch(url, {
     method,
