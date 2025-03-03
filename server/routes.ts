@@ -127,7 +127,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Claude API Initial Response:', JSON.stringify(initialClaudeData));
         
         // Return Claude API response directly to the client
-        return res.json(initialClaudeData);
+        return res.json({
+          conversationId: initialClaudeData.conversationId,
+          message: {
+            id: initialClaudeData.messageId
+          }
+        });
       } catch (err) {
         console.error('Error in /api/chat:', err);
         return res.status(500).json({ message: 'Failed to create conversation or send message' });
@@ -135,6 +140,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else {
       // Not a JSON request, pass to next middleware
       next();
+    }
+  });
+
+  // Message retrieval endpoint
+  app.get('/api/message/:conversationId/:messageId', async (req, res) => {
+    try {
+      const { conversationId, messageId } = req.params;
+      const apiKey = "H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8";
+      
+      console.log(`Fetching message from conversation ${conversationId}, message ${messageId}`);
+      
+      // Function to retrieve message with retries
+      const fetchMessageWithRetry = async (maxRetries = 5, initialDelay = 1000) => {
+        let attempt = 0;
+        let delay = initialDelay;
+        
+        while (attempt < maxRetries) {
+          try {
+            const messageUrl = `https://7pg9r2dlcc.execute-api.us-east-1.amazonaws.com/api/conversation/${conversationId}/${messageId}`;
+            console.log(`Fetching message from: ${messageUrl}`);
+            
+            const messageResponse = await fetch(messageUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey
+              }
+            });
+            
+            // If message is not ready yet (404), retry with backoff
+            if (messageResponse.status === 404) {
+              attempt++;
+              console.log(`Message not ready yet, retrying in ${delay/1000} seconds... (Attempt ${attempt}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              delay = Math.min(delay * 1.5, 10000); // Exponential backoff with 10s cap
+              continue;
+            }
+            
+            // Handle other errors
+            if (!messageResponse.ok) {
+              const errorText = await messageResponse.text();
+              console.error(`Error fetching message: ${messageResponse.status} - ${errorText}`);
+              return { error: true, status: messageResponse.status, message: errorText };
+            }
+            
+            // Parse and return successful response
+            const messageData = await messageResponse.json();
+            return { error: false, data: messageData };
+          } catch (error) {
+            console.error('Error during message fetch:', error);
+            attempt++;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay = Math.min(delay * 1.5, 10000);
+          }
+        }
+        
+        return { error: true, status: 500, message: `Failed to retrieve message after ${maxRetries} attempts` };
+      };
+      
+      // Execute the retry logic
+      const result = await fetchMessageWithRetry();
+      
+      if (result.error) {
+        return res.status(result.status || 500).json({ error: result.message });
+      }
+      
+      return res.json(result.data);
+    } catch (error) {
+      console.error('Error in message retrieval:', error);
+      return res.status(500).json({ error: 'Failed to retrieve message' });
     }
   });
 
