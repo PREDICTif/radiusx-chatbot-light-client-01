@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link } from 'wouter';
 
 interface AppHeaderProps {
   toggleSidebar: () => void;
@@ -8,8 +8,6 @@ interface AppHeaderProps {
 }
 
 const AppHeader: FC<AppHeaderProps> = ({ toggleSidebar, toggleDarkMode, darkMode }) => {
-  const [location] = useLocation();
-
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 h-16 flex items-center px-4 z-10">
       <button 
@@ -30,11 +28,6 @@ const AppHeader: FC<AppHeaderProps> = ({ toggleSidebar, toggleDarkMode, darkMode
         </div>
       </Link>
       <div className="ml-auto flex items-center gap-3">
-        <Link href="/settings">
-          <div className={`text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary p-2 rounded-full ${location === '/settings' ? 'text-primary dark:text-primary' : ''}`}>
-            <i className="fas fa-cog text-lg"></i>
-          </div>
-        </Link>
         <button 
           onClick={toggleDarkMode}
           className="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary p-2 rounded-full" 

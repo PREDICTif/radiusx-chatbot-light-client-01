@@ -1,31 +1,15 @@
-// Default values are only used as fallback if localStorage isn't available
-const DEFAULT_API_ENDPOINT = "https://bedrock-runtime.us-east-1.amazonaws.com";
-const DEFAULT_API_KEY = "";
+const API_ENDPOINT = "https://7pg9r2dlcc.execute-api.us-east-1.amazonaws.com/api";
+const API_KEY = "H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8";
 
 export async function apiRequest(
   method: string,
   path: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Get API settings from localStorage
-  let apiEndpoint = DEFAULT_API_ENDPOINT;
-  let apiKey = DEFAULT_API_KEY;
-  
-  try {
-    const savedSettings = localStorage.getItem('apiSettings');
-    if (savedSettings) {
-      const settings = JSON.parse(savedSettings);
-      apiEndpoint = settings.endpoint || DEFAULT_API_ENDPOINT;
-      apiKey = settings.apiKey || DEFAULT_API_KEY;
-    }
-  } catch (err) {
-    console.error('Error retrieving API settings:', err);
-  }
-  
-  const url = `${apiEndpoint}${path}`;
+  const url = `${API_ENDPOINT}${path}`;
   
   const headers: HeadersInit = {
-    'x-api-key': apiKey,
+    'x-api-key': API_KEY,
   };
   
   if (data) {
