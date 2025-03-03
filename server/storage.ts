@@ -101,7 +101,7 @@ export class MemStorage implements IStorage {
       conversationId,
       role: 'user',
       content: userInput,
-      createTime: Date.now()
+      createTime: new Date()
     };
     
     // Generate assistant response
@@ -113,7 +113,7 @@ export class MemStorage implements IStorage {
       conversationId,
       role: 'assistant',
       content: responseContent,
-      createTime: Date.now()
+      createTime: new Date()
     };
     
     // Create message map
@@ -125,7 +125,7 @@ export class MemStorage implements IStorage {
     const conversation: Conversation = {
       id: conversationId,
       title: "New Conversation",
-      createTime: Date.now(),
+      createTime: new Date(),
       lastMessageId: assistantMessageId,
       botId: null,
       userId: null,
@@ -166,7 +166,7 @@ export class MemStorage implements IStorage {
       conversationId,
       role: 'user',
       content: userInput,
-      createTime: Date.now()
+      createTime: new Date()
     };
     
     // Generate assistant response
@@ -178,15 +178,18 @@ export class MemStorage implements IStorage {
       conversationId,
       role: 'assistant',
       content: responseContent,
-      createTime: Date.now()
+      createTime: new Date()
     };
     
     // Update message map
     if (!conversation.messageMap) {
       conversation.messageMap = {};
     }
-    conversation.messageMap[userMessageId] = userMessage;
-    conversation.messageMap[assistantMessageId] = assistantMessage;
+    
+    // Type assertion to handle the messageMap being unknown
+    const msgMap = conversation.messageMap as Record<string, Message>;
+    msgMap[userMessageId] = userMessage;
+    msgMap[assistantMessageId] = assistantMessage;
     
     // Store messages
     this.messages.set(userMessageId, userMessage);
