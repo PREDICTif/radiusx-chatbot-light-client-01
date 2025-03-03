@@ -1,8 +1,19 @@
-// Available Claude models
+// Available models
 export type ModelType = 
-  | 'claude-3-haiku-20240307'
-  | 'claude-3-sonnet-20240229'
-  | 'claude-3-opus-20240229';
+  | 'claude-v3-haiku'
+  | 'claude-v3-sonnet'
+  | 'claude-v3-opus'
+  | 'claude-v3.5-sonnet'
+  | 'claude-v3.5-sonnet-v2'
+  | 'claude-v3.5-haiku'
+  | 'claude-instant-v1'
+  | 'claude-v2'
+  | 'mistral-7b-instruct'
+  | 'mixtral-8x7b-instruct'
+  | 'mistral-large'
+  | 'amazon-nova-pro'
+  | 'amazon-nova-lite'
+  | 'amazon-nova-micro';
 
 // Conversation types
 export interface Conversation {

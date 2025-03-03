@@ -10,7 +10,7 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [selectedModel, setSelectedModel] = useState<ModelType>("claude-3-haiku-20240307");
+  const [selectedModel, setSelectedModel] = useState<ModelType>("claude-v3-haiku");
 
   const {
     conversations,
