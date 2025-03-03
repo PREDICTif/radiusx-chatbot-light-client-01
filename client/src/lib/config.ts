@@ -11,18 +11,18 @@ if (isBrowser && import.meta && import.meta.env) {
   envRegion = import.meta.env.VITE_AWS_REGION || '';
 }
 
-// AWS Bedrock Configuration
+// API Configuration
 export const config = {
   // API settings
-  aws: {
-    apiKey: envApiKey || 'H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8', // Default for demo
-    endpoint: envEndpoint || 'https://bedrock-runtime.us-east-1.amazonaws.com',
-    region: envRegion || 'us-east-1',
+  api: {
+    apiKey: envApiKey || 'H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8', // Default API key
+    endpoint: envEndpoint || 'https://7pg9r2dlcc.execute-api.us-east-1.amazonaws.com/api',
+    headerName: 'x-api-key', // Header name for API key
   },
   
   // Feature flags
   features: {
-    useMockResponses: true, // Set to false to use real API
+    useMockResponses: false, // Set to true to use mock responses instead of real API
   },
   
   // Claude model IDs
@@ -39,10 +39,10 @@ export const config = {
 // For server-side usage if needed
 export const getServerConfig = () => {
   return {
-    aws: {
-      apiKey: process.env.AWS_BEDROCK_API_KEY || config.aws.apiKey,
-      endpoint: process.env.AWS_BEDROCK_ENDPOINT || config.aws.endpoint,
-      region: process.env.AWS_REGION || config.aws.region,
+    api: {
+      apiKey: process.env.API_KEY || config.api.apiKey,
+      endpoint: process.env.API_ENDPOINT || config.api.endpoint,
+      headerName: process.env.API_HEADER_NAME || config.api.headerName,
     },
     features: {
       ...config.features,

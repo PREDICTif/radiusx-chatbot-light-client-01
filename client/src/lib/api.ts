@@ -27,29 +27,28 @@ export async function apiRequest(
   return res;
 }
 
-// Direct AWS Bedrock API request (for future use)
-export async function bedrockApiRequest(
+// Direct API request to the Claude API endpoint
+export async function claudeApiRequest(
   prompt: string,
   model: ModelType,
 ): Promise<Response> {
-  if (!config.aws.apiKey) {
-    throw new Error('AWS Bedrock API key is not configured');
+  if (!config.api.apiKey) {
+    throw new Error('API key is not configured');
   }
   
-  const url = config.aws.endpoint;
+  const url = config.api.endpoint;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${config.aws.apiKey}`,
-    'X-Amz-Region': config.aws.region,
+    [config.api.headerName]: config.api.apiKey,
   };
   
   // Format the request based on Claude API requirements
   const requestBody = {
-    modelId: model,
+    model: model,
     prompt: prompt,
     temperature: 0.7,
-    maxTokens: 1024,
+    max_tokens: 1024,
   };
   
   const res = await fetch(url, {
@@ -60,7 +59,7 @@ export async function bedrockApiRequest(
 
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`AWS Bedrock API Error ${res.status}: ${errorText || res.statusText}`);
+    throw new Error(`API Error ${res.status}: ${errorText || res.statusText}`);
   }
   
   return res;

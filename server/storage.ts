@@ -7,7 +7,7 @@ import {
   type InsertConversation, 
   type InsertMessage 
 } from "@shared/schema";
-import { bedrockApi } from "./api";
+import { claudeApi } from "./api";
 import type { ModelType } from "../client/src/lib/types";
 
 // Interface for storage operations
@@ -107,10 +107,10 @@ export class MemStorage implements IStorage {
       createTime: new Date()
     };
     
-    // Generate assistant response using BedrockApi
+    // Generate assistant response using ClaudeApi
     try {
-      // Get response from BedrockApi (uses mock response if configured)
-      const responseContent = await bedrockApi.sendMessage(userInput, model);
+      // Get response from ClaudeApi (uses mock response if configured)
+      const responseContent = await claudeApi.sendMessage(userInput, model);
       
       // Create assistant message
       const assistantMessage: Message = {

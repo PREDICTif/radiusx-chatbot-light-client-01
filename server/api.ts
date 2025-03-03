@@ -1,25 +1,26 @@
-import { config } from '../client/src/lib/config';
+import { getServerConfig } from '../client/src/lib/config';
 import type { ModelType } from '../client/src/lib/types';
 
 /**
- * Handles communication with AWS Bedrock API for Claude models
+ * Handles communication with Claude API endpoint
  */
-export class BedrockApi {
+export class ClaudeApi {
   private apiKey: string;
   private endpoint: string;
-  private region: string;
+  private headerName: string;
   private useMockResponses: boolean;
   
   constructor() {
+    const config = getServerConfig();
     // Use environment variables or defaults from config
-    this.apiKey = process.env.AWS_BEDROCK_API_KEY || config.aws.apiKey;
-    this.endpoint = process.env.AWS_BEDROCK_ENDPOINT || config.aws.endpoint;
-    this.region = process.env.AWS_REGION || config.aws.region;
+    this.apiKey = config.api.apiKey;
+    this.endpoint = config.api.endpoint;
+    this.headerName = config.api.headerName;
     this.useMockResponses = config.features.useMockResponses;
   }
   
   /**
-   * Send a request to AWS Bedrock API
+   * Send a request to Claude API endpoint
    */
   async sendMessage(
     prompt: string, 
@@ -31,24 +32,25 @@ export class BedrockApi {
     }
     
     if (!this.apiKey) {
-      throw new Error('AWS Bedrock API key not configured');
+      throw new Error('API key not configured');
     }
     
     try {
-      const url = `${this.endpoint}/model/${model}/invoke`;
+      const url = this.endpoint;
       
-      const headers = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`,
-        'X-Amz-Region': this.region
       };
       
-      // Format request according to AWS Bedrock/Claude API
+      // Add the API key with the specified header name
+      headers[this.headerName] = this.apiKey;
+      
+      // Format request according to Claude API
       const requestBody = {
-        prompt: `Human: ${prompt}\n\nAssistant:`,
-        max_tokens_to_sample: 1000,
+        model: model,
+        prompt: prompt,
         temperature: 0.7,
-        anthropic_version: "bedrock-2023-05-31"
+        max_tokens: 1024
       };
       
       const response = await fetch(url, {
@@ -59,14 +61,14 @@ export class BedrockApi {
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`AWS Bedrock API Error: ${response.status} - ${errorText}`);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
       }
       
       const result = await response.json();
-      return result.completion || "No response from API";
+      return result.completion || result.content || "No response from API";
       
     } catch (error) {
-      console.error('Error calling AWS Bedrock API:', error);
+      console.error('Error calling Claude API:', error);
       throw error;
     }
   }
@@ -103,4 +105,4 @@ export class BedrockApi {
   }
 }
 
-export const bedrockApi = new BedrockApi();
+export const claudeApi = new ClaudeApi();
