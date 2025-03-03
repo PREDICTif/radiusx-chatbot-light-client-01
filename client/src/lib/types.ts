@@ -24,6 +24,7 @@ export interface Conversation {
   lastMessageId: string;
   botId: string | null;
   shouldContinue: boolean;
+  userId?: number | null;
 }
 
 // Message types

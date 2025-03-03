@@ -14,9 +14,11 @@ export const conversations = pgTable("conversations", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
   createTime: timestamp("create_time").notNull().defaultNow(),
-  lastMessageId: text("last_message_id"),
+  lastMessageId: text("last_message_id").notNull(),
   botId: text("bot_id"),
   userId: integer("user_id").references(() => users.id),
+  shouldContinue: boolean("should_continue").default(false),
+  messageMap: jsonb("message_map").default({})
 });
 
 // Message model
@@ -40,6 +42,8 @@ export const insertConversationSchema = createInsertSchema(conversations).pick({
   lastMessageId: true,
   botId: true,
   userId: true,
+  shouldContinue: true,
+  messageMap: true
 });
 
 export const insertMessageSchema = createInsertSchema(messages).pick({

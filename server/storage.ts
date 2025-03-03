@@ -72,7 +72,9 @@ export class MemStorage implements IStorage {
       createTime: new Date(),
       lastMessageId: messageId,
       botId: null,
-      userId: null
+      userId: null,
+      shouldContinue: false,
+      messageMap: {}
     };
     
     this.conversations.set(conversationId, conversation);

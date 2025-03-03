@@ -154,10 +154,10 @@ export function useConversations(
         // Update conversation with assistant response
         setConversations(prev => 
           prev.map(conv => 
-            conv.id === (data.conversationId || activeConversationId)
+            conv.id === (data.conversationId || activeConversationId || '')
               ? { 
                   ...conv, 
-                  lastMessageId: assistantMessage.id,
+                  lastMessageId: assistantMessage.id || '',
                   messageMap: {
                     ...conv.messageMap,
                     [userMessage.id || '']: userMessage,
