@@ -1,11 +1,11 @@
-# Claude AI Chat Client
+# RadiusX Chat Client
 
-A responsive web client for Claude AI using AWS Bedrock, designed for seamless and efficient conversational interactions. The application provides a streamlined chat interface with core messaging capabilities and simplified API integration.
+A responsive web client for RadiusX using AWS Bedrock, designed for seamless and efficient conversational interactions. The application provides a streamlined chat interface with core messaging capabilities and simplified API integration.
 
 ## Features
 
 - Clean, responsive UI optimized for desktop and mobile
-- Support for multiple Claude AI models (Claude 3 Haiku, Sonnet, Opus, and 3.5 models)
+- Support for multiple RadiusX models (Claude 3 Haiku, Sonnet, Opus, and 3.5 models)
 - Dark/light mode theme support with automatic system detection
 - Message history and conversation management
 - Real-time chat with simulated responses
