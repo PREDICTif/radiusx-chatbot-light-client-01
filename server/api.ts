@@ -40,7 +40,7 @@ export class ClaudeApi {
     }
     
     try {
-      const url = this.endpoint;
+      const url = `${this.endpoint}/conversation`;
       
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -78,9 +78,13 @@ export class ClaudeApi {
       if (response.status === 200) {
         // Initial message creation returns messageId and conversationId
         const initialResponse = await response.json();
+        console.log('Initial response:', JSON.stringify(initialResponse));
+        
         if (initialResponse.conversationId && initialResponse.messageId) {
-          // We need to fetch the actual assistant response
+          // We need to fetch the actual assistant response (this will be the assistant's message)
           const messageUrl = `${this.endpoint}/conversation/${initialResponse.conversationId}/${initialResponse.messageId}`;
+          console.log('Fetching message from:', messageUrl);
+          
           const messageResponse = await fetch(messageUrl, {
             method: 'GET',
             headers
@@ -88,6 +92,8 @@ export class ClaudeApi {
           
           if (messageResponse.ok) {
             const messageData = await messageResponse.json();
+            console.log('Message data response:', JSON.stringify(messageData));
+            
             // Extract text content from the response
             if (messageData.message && 
                 messageData.message.content && 
@@ -96,10 +102,15 @@ export class ClaudeApi {
               const textContent = messageData.message.content.find(
                 (item: any) => item.contentType === 'text'
               );
+              
               if (textContent && textContent.body) {
                 return textContent.body;
               }
             }
+          } else {
+            const errorText = await messageResponse.text();
+            console.error(`Error fetching message: ${messageResponse.status} - ${errorText}`);
+            return `Error getting Claude response: ${messageResponse.status}`;
           }
           return "Retrieved message but couldn't extract content";
         }

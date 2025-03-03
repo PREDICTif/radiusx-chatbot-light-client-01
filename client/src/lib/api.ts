@@ -37,7 +37,7 @@ export async function claudeApiRequest(
     throw new Error('API key is not configured');
   }
   
-  const url = config.api.endpoint;
+  const url = `${config.api.endpoint}/conversation`;
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -69,5 +69,31 @@ export async function claudeApiRequest(
     throw new Error(`API Error ${res.status}: ${errorText || res.statusText}`);
   }
   
-  return res;
+  // Parse the initial response
+  const initialResponse = await res.json();
+  
+  // If we have a conversation ID and message ID, fetch the actual message
+  if (initialResponse.conversationId && initialResponse.messageId) {
+    const messageUrl = `${config.api.endpoint}/conversation/${initialResponse.conversationId}/${initialResponse.messageId}`;
+    const messageResponse = await fetch(messageUrl, {
+      method: 'GET',
+      headers
+    });
+    
+    if (!messageResponse.ok) {
+      const errorText = await messageResponse.text();
+      throw new Error(`API Error ${messageResponse.status}: ${errorText || messageResponse.statusText}`);
+    }
+    
+    // Return the actual message response
+    return messageResponse;
+  }
+  
+  // Return the original response if it doesn't have conversation/message IDs
+  // This creates a new Response object with the same data
+  return new Response(JSON.stringify(initialResponse), {
+    status: res.status,
+    statusText: res.statusText,
+    headers: res.headers,
+  });
 }
