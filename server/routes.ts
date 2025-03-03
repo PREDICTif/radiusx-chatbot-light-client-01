@@ -82,27 +82,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Chat endpoint - compatible with front-end
+  // Chat endpoint - compatible with front-end 
+  // Direct proxy to Claude API - skip local storage
   app.post('/api/chat', async (req, res, next) => {
     // Only process if this is a JSON request
     if (req.is('application/json')) {
       console.log('Processing /api/chat with body:', JSON.stringify(req.body));
       try {
+        // Claude API configuration
+        const apiEndpoint = "https://7pg9r2dlcc.execute-api.us-east-1.amazonaws.com/api/conversation";
+        const apiKey = "H7UI4czPRX7mxrlg67v7tCPL1XnBx5y90p4ieSZ8";
+        
+        // Extract conversation ID and message
         const { conversationId, message } = req.body;
         
         if (!message) {
           return res.status(400).json({ message: 'Message is required' });
         }
         
-        if (conversationId) {
-          // Add to existing conversation
-          const result = await storage.addMessageToConversation(conversationId, message);
-          return res.json(result);
-        } else {
-          // Create new conversation
-          const result = await storage.createConversation(message);
-          return res.json(result);
+        // Send the request directly to Claude API
+        const claudeResponse = await fetch(apiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey
+          },
+          body: JSON.stringify({
+            conversationId: conversationId || null,
+            message
+          })
+        });
+        
+        if (!claudeResponse.ok) {
+          const errorText = await claudeResponse.text();
+          console.error(`Claude API Error: ${claudeResponse.status} - ${errorText}`);
+          return res.status(claudeResponse.status).json({ 
+            error: 'Failed to get response from Claude API',
+            details: errorText
+          });
         }
+        
+        // Get initial response with conversation and message IDs
+        const initialClaudeData = await claudeResponse.json();
+        console.log('Claude API Initial Response:', JSON.stringify(initialClaudeData));
+        
+        // Return Claude API response directly to the client
+        return res.json(initialClaudeData);
       } catch (err) {
         console.error('Error in /api/chat:', err);
         return res.status(500).json({ message: 'Failed to create conversation or send message' });

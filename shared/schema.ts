@@ -18,7 +18,10 @@ export const conversations = pgTable("conversations", {
   botId: text("bot_id"),
   userId: integer("user_id").references(() => users.id),
   shouldContinue: boolean("should_continue").default(false),
-  messageMap: jsonb("message_map").default({})
+  messageMap: jsonb("message_map").default({}),
+  // API-specific fields for external IDs
+  apiConversationId: text("api_conversation_id"),
+  apiMessageId: text("api_message_id")
 });
 
 // Message model
@@ -43,7 +46,9 @@ export const insertConversationSchema = createInsertSchema(conversations).pick({
   botId: true,
   userId: true,
   shouldContinue: true,
-  messageMap: true
+  messageMap: true,
+  apiConversationId: true,
+  apiMessageId: true
 });
 
 export const insertMessageSchema = createInsertSchema(messages).pick({

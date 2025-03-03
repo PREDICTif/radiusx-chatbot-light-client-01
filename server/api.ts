@@ -28,11 +28,16 @@ export class ClaudeApi {
    */
   async sendMessage(
     prompt: string, 
-    model: ModelType = 'claude-v3-haiku'
-  ): Promise<string> {
+    model: ModelType = 'claude-v3-haiku',
+    conversationId?: string | null
+  ): Promise<any> {
     // If configured to use mock responses, don't make actual API calls
     if (this.useMockResponses) {
-      return this.generateMockResponse(prompt);
+      return {
+        text: this.generateMockResponse(prompt),
+        apiConversationId: null,
+        apiMessageId: null
+      };
     }
     
     if (!this.apiKey) {
@@ -51,7 +56,7 @@ export class ClaudeApi {
       
       // Format request according to Claude API - following the OpenAPI spec
       const requestBody = {
-        conversationId: null,
+        conversationId: conversationId || null,
         message: {
           content: [
             {
@@ -81,20 +86,53 @@ export class ClaudeApi {
         console.log('Initial response:', JSON.stringify(initialResponse));
         
         if (initialResponse.conversationId && initialResponse.messageId) {
+          // Save the API conversation ID and message ID
+          const apiConversationId = initialResponse.conversationId;
+          const apiMessageId = initialResponse.messageId;
+          
           // We need to wait a brief moment to ensure the message is available
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Then fetch the actual assistant response (this will be the assistant's message)
-          const messageUrl = `${this.endpoint}/conversation/${initialResponse.conversationId}/${initialResponse.messageId}`;
+          const messageUrl = `${this.endpoint}/conversation/${apiConversationId}/${apiMessageId}`;
           console.log('Fetching message from:', messageUrl);
           
-          const messageResponse = await fetch(messageUrl, {
+          let messageData;
+          let messageResponse = await fetch(messageUrl, {
             method: 'GET',
             headers
           });
           
+          // Implement retry logic if needed
+          if (!messageResponse.ok && messageResponse.status === 404) {
+            // Try up to 3 times with increasing delays
+            for (let retry = 1; retry <= 3; retry++) {
+              console.log(`Message not ready yet, retry ${retry} of 3 in ${retry * 1000}ms...`);
+              await new Promise(resolve => setTimeout(resolve, retry * 1000));
+              
+              messageResponse = await fetch(messageUrl, {
+                method: 'GET',
+                headers
+              });
+              
+              if (messageResponse.ok) {
+                break;
+              }
+              
+              if (retry === 3) {
+                const errorText = await messageResponse.text();
+                console.error(`Error fetching message after retries: ${messageResponse.status} - ${errorText}`);
+                return {
+                  text: `Error getting Claude response after retries: ${messageResponse.status}`,
+                  apiConversationId,
+                  apiMessageId
+                };
+              }
+            }
+          }
+          
           if (messageResponse.ok) {
-            const messageData = await messageResponse.json();
+            messageData = await messageResponse.json();
             console.log('Message data response:', JSON.stringify(messageData));
             
             // Extract text content from the response
@@ -107,55 +145,46 @@ export class ClaudeApi {
               );
               
               if (textContent && textContent.body) {
-                // Return the full response for more complete processing
-                return textContent.body;
+                // Return both the text content and the API IDs
+                return {
+                  text: textContent.body,
+                  apiData: messageData,
+                  apiConversationId,
+                  apiMessageId
+                };
               }
             }
             
-            // Fallback: Return the entire response as a string if we can't extract content properly
-            return JSON.stringify(messageData);
+            // Fallback: Return the entire response data if we can't extract content properly
+            return {
+              text: JSON.stringify(messageData),
+              apiData: messageData,
+              apiConversationId,
+              apiMessageId
+            };
           } else {
-            // If we get a 404, implement retry mechanism with delay
-            if (messageResponse.status === 404) {
-              console.log('Message not ready yet, retrying in 1.5 seconds...');
-              // Wait longer before retry
-              await new Promise(resolve => setTimeout(resolve, 1500));
-              
-              // Retry the request
-              const retryResponse = await fetch(messageUrl, {
-                method: 'GET',
-                headers
-              });
-              
-              if (retryResponse.ok) {
-                const retryData = await retryResponse.json();
-                console.log('Retry message response:', JSON.stringify(retryData));
-                
-                if (retryData.message && 
-                    retryData.message.content && 
-                    retryData.message.content.length > 0) {
-                  const textContent = retryData.message.content.find(
-                    (item: any) => item.contentType === 'text'
-                  );
-                  
-                  if (textContent && textContent.body) {
-                    return textContent.body;
-                  }
-                }
-                
-                return JSON.stringify(retryData);
-              }
-            }
-            
             const errorText = await messageResponse.text();
             console.error(`Error fetching message: ${messageResponse.status} - ${errorText}`);
-            return `Error getting Claude response: ${messageResponse.status}`;
+            return {
+              text: `Error getting Claude response: ${messageResponse.status}`,
+              apiConversationId,
+              apiMessageId
+            };
           }
-          return "Retrieved message but couldn't extract content";
         }
-        return "No proper response from API";
+        
+        return {
+          text: "No proper response from API",
+          apiConversationId: null,
+          apiMessageId: null
+        };
       }
-      return "Failed to get a valid response from API";
+      
+      return {
+        text: "Failed to get a valid response from API",
+        apiConversationId: null,
+        apiMessageId: null
+      };
       
     } catch (error) {
       console.error('Error calling Claude API:', error);

@@ -89,7 +89,7 @@ export class MemStorage implements IStorage {
   }
 
   async createConversation(message: any): Promise<any> {
-    // Generate IDs
+    // Generate local IDs
     const conversationId = `conv_${Date.now()}`;
     const userMessageId = `msg_${Date.now()}`;
     const assistantMessageId = `msg_${Date.now() + 1}`;
@@ -97,6 +97,10 @@ export class MemStorage implements IStorage {
     // Extract user input and model
     const userInput = message.content[0].body;
     const model: ModelType = message.model || 'claude-v3-haiku';
+    
+    // Store Claude API IDs if available
+    let apiConversationId = null;
+    let apiMessageId = null;
     
     // Create user message
     const userMessage: Message = {
@@ -110,7 +114,12 @@ export class MemStorage implements IStorage {
     // Generate assistant response using ClaudeApi
     try {
       // Get response from ClaudeApi (uses mock response if configured)
-      const responseContent = await claudeApi.sendMessage(userInput, model);
+      const responseData = await claudeApi.sendMessage(userInput, model);
+      
+      // Extract the text content and API IDs
+      const responseContent = responseData.text;
+      apiConversationId = responseData.apiConversationId;
+      apiMessageId = responseData.apiMessageId;
       
       // Create assistant message
       const assistantMessage: Message = {
@@ -135,7 +144,10 @@ export class MemStorage implements IStorage {
         botId: model,
         userId: null,
         shouldContinue: false,
-        messageMap: messageMap
+        messageMap: messageMap,
+        // Store the API IDs for future reference
+        apiConversationId,
+        apiMessageId
       };
       
       // Store everything
@@ -143,11 +155,15 @@ export class MemStorage implements IStorage {
       this.messages.set(assistantMessageId, assistantMessage);
       this.conversations.set(conversationId, conversation);
       
+      // For API compatibility, return both our ID and the API's ID
       return {
         conversationId,
         message: {
           id: userMessageId
-        }
+        },
+        // Include the API IDs in the response
+        apiConversationId,
+        apiMessageId
       };
     } catch (error) {
       console.error('Error creating conversation:', error);
@@ -183,6 +199,9 @@ export class MemStorage implements IStorage {
     const userInput = message.content[0].body;
     const model: ModelType = message.model || (conversation.botId as ModelType) || 'claude-v3-haiku';
     
+    // Get API conversation ID if available
+    const apiConversationId = conversation.apiConversationId || null;
+    
     // Create user message
     const userMessage: Message = {
       id: userMessageId,
@@ -194,7 +213,12 @@ export class MemStorage implements IStorage {
     
     try {
       // Get response from ClaudeApi (uses mock response if configured)
-      const responseContent = await claudeApi.sendMessage(userInput, model);
+      // Pass the API conversation ID if we have it
+      const responseData = await claudeApi.sendMessage(userInput, model, apiConversationId);
+      
+      // Extract the text content and API message ID
+      const responseContent = responseData.text;
+      const apiMessageId = responseData.apiMessageId;
       
       // Create assistant message
       const assistantMessage: Message = {
@@ -227,13 +251,18 @@ export class MemStorage implements IStorage {
         conversation.title = this.generateConversationTitle(userInput);
       }
       
+      // Update the API message ID
+      conversation.apiMessageId = apiMessageId;
+      
       this.conversations.set(conversationId, conversation);
       
       return {
         conversationId,
         message: {
           id: userMessageId
-        }
+        },
+        apiConversationId: responseData.apiConversationId,
+        apiMessageId
       };
     } catch (error) {
       console.error('Error adding message to conversation:', error);
