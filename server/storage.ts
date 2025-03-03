@@ -7,6 +7,8 @@ import {
   type InsertConversation, 
   type InsertMessage 
 } from "@shared/schema";
+import { bedrockApi } from "./api";
+import type { ModelType } from "../client/src/lib/types";
 
 // Interface for storage operations
 export interface IStorage {
@@ -92,8 +94,9 @@ export class MemStorage implements IStorage {
     const userMessageId = `msg_${Date.now()}`;
     const assistantMessageId = `msg_${Date.now() + 1}`;
     
-    // Extract user input
+    // Extract user input and model
     const userInput = message.content[0].body;
+    const model: ModelType = message.model || 'claude-v3-haiku';
     
     // Create user message
     const userMessage: Message = {
@@ -104,46 +107,65 @@ export class MemStorage implements IStorage {
       createTime: new Date()
     };
     
-    // Generate assistant response
-    const responseContent = this.generateMockResponse(userInput);
+    // Generate assistant response using BedrockApi
+    try {
+      // Get response from BedrockApi (uses mock response if configured)
+      const responseContent = await bedrockApi.sendMessage(userInput, model);
+      
+      // Create assistant message
+      const assistantMessage: Message = {
+        id: assistantMessageId,
+        conversationId,
+        role: 'assistant',
+        content: responseContent,
+        createTime: new Date()
+      };
+      
+      // Create message map
+      const messageMap: Record<string, Message> = {};
+      messageMap[userMessageId] = userMessage;
+      messageMap[assistantMessageId] = assistantMessage;
+      
+      // Create conversation
+      const conversation: Conversation = {
+        id: conversationId,
+        title: this.generateConversationTitle(userInput),
+        createTime: new Date(),
+        lastMessageId: assistantMessageId,
+        botId: model,
+        userId: null,
+        shouldContinue: false,
+        messageMap: messageMap
+      };
+      
+      // Store everything
+      this.messages.set(userMessageId, userMessage);
+      this.messages.set(assistantMessageId, assistantMessage);
+      this.conversations.set(conversationId, conversation);
+      
+      return {
+        conversationId,
+        message: {
+          id: userMessageId
+        }
+      };
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
+  }
+  
+  // Generate a conversation title based on the first message content
+  private generateConversationTitle(firstMessage: string): string {
+    // Truncate the first message if it's too long
+    const maxLength = 30;
+    let title = firstMessage.trim();
     
-    // Create assistant message
-    const assistantMessage: Message = {
-      id: assistantMessageId,
-      conversationId,
-      role: 'assistant',
-      content: responseContent,
-      createTime: new Date()
-    };
+    if (title.length > maxLength) {
+      title = title.substring(0, maxLength) + '...';
+    }
     
-    // Create message map
-    const messageMap: Record<string, Message> = {};
-    messageMap[userMessageId] = userMessage;
-    messageMap[assistantMessageId] = assistantMessage;
-    
-    // Create conversation
-    const conversation: Conversation = {
-      id: conversationId,
-      title: "New Conversation",
-      createTime: new Date(),
-      lastMessageId: assistantMessageId,
-      botId: null,
-      userId: null,
-      shouldContinue: false,
-      messageMap: messageMap
-    };
-    
-    // Store everything
-    this.messages.set(userMessageId, userMessage);
-    this.messages.set(assistantMessageId, assistantMessage);
-    this.conversations.set(conversationId, conversation);
-    
-    return {
-      conversationId,
-      message: {
-        id: userMessageId
-      }
-    };
+    return title || "New Conversation";
   }
 
   async addMessageToConversation(conversationId: string, message: any): Promise<any> {
@@ -157,8 +179,9 @@ export class MemStorage implements IStorage {
     const userMessageId = `msg_${Date.now()}`;
     const assistantMessageId = `msg_${Date.now() + 1}`;
     
-    // Extract user input
+    // Extract user input and model
     const userInput = message.content[0].body;
+    const model: ModelType = message.model || (conversation.botId as ModelType) || 'claude-v3-haiku';
     
     // Create user message
     const userMessage: Message = {
@@ -169,42 +192,53 @@ export class MemStorage implements IStorage {
       createTime: new Date()
     };
     
-    // Generate assistant response
-    const responseContent = this.generateMockResponse(userInput);
-    
-    // Create assistant message
-    const assistantMessage: Message = {
-      id: assistantMessageId,
-      conversationId,
-      role: 'assistant',
-      content: responseContent,
-      createTime: new Date()
-    };
-    
-    // Update message map
-    if (!conversation.messageMap) {
-      conversation.messageMap = {};
-    }
-    
-    // Type assertion to handle the messageMap being unknown
-    const msgMap = conversation.messageMap as Record<string, Message>;
-    msgMap[userMessageId] = userMessage;
-    msgMap[assistantMessageId] = assistantMessage;
-    
-    // Store messages
-    this.messages.set(userMessageId, userMessage);
-    this.messages.set(assistantMessageId, assistantMessage);
-    
-    // Update conversation
-    conversation.lastMessageId = assistantMessageId;
-    this.conversations.set(conversationId, conversation);
-    
-    return {
-      conversationId,
-      message: {
-        id: userMessageId
+    try {
+      // Get response from BedrockApi (uses mock response if configured)
+      const responseContent = await bedrockApi.sendMessage(userInput, model);
+      
+      // Create assistant message
+      const assistantMessage: Message = {
+        id: assistantMessageId,
+        conversationId,
+        role: 'assistant',
+        content: responseContent,
+        createTime: new Date()
+      };
+      
+      // Update message map
+      if (!conversation.messageMap) {
+        conversation.messageMap = {};
       }
-    };
+      
+      // Type assertion to handle the messageMap being unknown
+      const msgMap = conversation.messageMap as Record<string, Message>;
+      msgMap[userMessageId] = userMessage;
+      msgMap[assistantMessageId] = assistantMessage;
+      
+      // Store messages
+      this.messages.set(userMessageId, userMessage);
+      this.messages.set(assistantMessageId, assistantMessage);
+      
+      // Update conversation
+      conversation.lastMessageId = assistantMessageId;
+      
+      // If first message defined the title, update it
+      if (!conversation.title || conversation.title === "New Conversation") {
+        conversation.title = this.generateConversationTitle(userInput);
+      }
+      
+      this.conversations.set(conversationId, conversation);
+      
+      return {
+        conversationId,
+        message: {
+          id: userMessageId
+        }
+      };
+    } catch (error) {
+      console.error('Error adding message to conversation:', error);
+      throw error;
+    }
   }
 
   // Message methods

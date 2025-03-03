@@ -60,8 +60,24 @@ A responsive web client for RadiusX using AWS Bedrock, designed for seamless and
 
 To use this application with AWS Bedrock:
 
-1. Update the API endpoint in `client/src/lib/api.ts`
-2. Ensure your AWS credentials are properly configured
+1. Create a `.env` file in the root directory based on `.env.example`:
+   ```
+   # AWS Bedrock Configuration
+   VITE_AWS_BEDROCK_API_KEY=your_aws_bedrock_api_key_here
+   VITE_AWS_BEDROCK_ENDPOINT=https://bedrock-runtime.us-east-1.amazonaws.com
+   VITE_AWS_REGION=us-east-1
+   ```
+
+2. Get your AWS Bedrock API key:
+   - Sign in to your AWS account
+   - Navigate to the AWS Bedrock service
+   - Set up appropriate permissions and model access for Claude models
+   - Generate an API key and paste it in your `.env` file
+
+3. Configuration options:
+   - Edit `client/src/lib/config.ts` to customize application settings
+   - Set `features.useMockResponses` to `false` to use the real API instead of mock responses
+   - Update the endpoint URL and region if needed for your AWS account
 
 ## License
 
