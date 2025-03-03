@@ -8,8 +8,7 @@ import {
   type InsertMessage 
 } from "@shared/schema";
 
-// modify the interface with any CRUD methods
-// you might need
+// Interface for storage operations
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -55,101 +54,152 @@ export class MemStorage implements IStorage {
     return user;
   }
 
+  // Generate mock response based on user input
+  private generateMockResponse(userInput: string): string {
+    const inputLower = userInput.toLowerCase();
+    
+    if (inputLower.includes("test")) {
+      return "This is a test response. I'm a mock Claude AI assistant running in a demonstration environment. I can simulate responses, but I'm not actually connecting to Claude AI at the moment. This is just a frontend demonstration.";
+    } else if (inputLower.includes("hello") || inputLower.includes("hi ")) {
+      return "Hello there! I'm a simulated Claude assistant. How can I help you today? Note that this is a demonstration version running locally, not connected to the actual Claude API.";
+    } else if (inputLower.includes("help")) {
+      return "I can help you with a variety of tasks like answering questions, explaining concepts, or assisting with creative writing. What specifically would you like help with? (Note: This is a mock implementation for demonstration purposes)";
+    } else if (inputLower.includes("weather")) {
+      return "I don't have access to real-time weather data in this mock implementation. In a real implementation with Claude AI, I could potentially help interpret weather data if provided, but would not have direct access to current weather information.";
+    } else if (inputLower.includes("time")) {
+      return `The current time according to the server is ${new Date().toLocaleTimeString()}. This is based on the server's clock.`;
+    } else if (inputLower.includes("model")) {
+      return "This is a demonstration of a Claude AI interface. In the full implementation, you would be communicating with one of several Claude models like Claude Haiku, Sonnet, or Opus. Each model has different capabilities and performance characteristics, with Opus being the most powerful and Haiku being faster but less capable.";
+    } else if (inputLower.includes("what can you do")) {
+      return "In a real implementation, Claude can write, edit, summarize, translate, answer questions about documents, brainstorm ideas, create content, help with coding, analyze data, and much more. This mock version is just demonstrating the UI interface.";
+    } else if (inputLower.includes("github") || inputLower.includes("repo")) {
+      return "This project is designed to be a frontend client for Claude AI. You can fork the repository on GitHub, modify it for your needs, and integrate it with your own backend that connects to the actual Claude API through AWS Bedrock.";
+    } else if (inputLower.length < 10) {
+      return "I noticed your message was quite short. Could you provide more details so I can give you a more helpful response? Remember, this is a demonstration with simulated responses.";
+    } else {
+      return "Thank you for your message. In a production environment, Claude AI would provide a thoughtful response based on your input. This mock implementation has limited response capabilities for demonstration purposes.";
+    }
+  }
+
   // Conversation methods
   async getConversation(id: string): Promise<Conversation | undefined> {
     return this.conversations.get(id);
   }
 
   async createConversation(message: any): Promise<any> {
-    // This would normally communicate with the Claude API
-    // For now, we'll just mock a conversation
+    // Generate IDs
     const conversationId = `conv_${Date.now()}`;
-    const messageId = `msg_${Date.now()}`;
+    const userMessageId = `msg_${Date.now()}`;
+    const assistantMessageId = `msg_${Date.now() + 1}`;
     
-    const conversation: Conversation = {
-      id: conversationId,
-      title: "New Conversation",
-      createTime: new Date(),
-      lastMessageId: messageId,
-      botId: null,
-      userId: null,
-      shouldContinue: false,
-      messageMap: {}
-    };
-    
-    this.conversations.set(conversationId, conversation);
+    // Extract user input
+    const userInput = message.content[0].body;
     
     // Create user message
     const userMessage: Message = {
-      id: messageId,
+      id: userMessageId,
       conversationId,
       role: 'user',
-      content: message.content[0].body,
-      createTime: new Date()
+      content: userInput,
+      createTime: Date.now()
     };
     
-    this.messages.set(messageId, userMessage);
+    // Generate assistant response
+    const responseContent = this.generateMockResponse(userInput);
     
-    // Mock assistant response
-    const assistantMessageId = `msg_${Date.now() + 1}`;
+    // Create assistant message
     const assistantMessage: Message = {
       id: assistantMessageId,
       conversationId,
       role: 'assistant',
-      content: "I'll help with that request. What else would you like to know?",
-      createTime: new Date()
+      content: responseContent,
+      createTime: Date.now()
     };
     
-    this.messages.set(assistantMessageId, assistantMessage);
+    // Create message map
+    const messageMap: Record<string, Message> = {};
+    messageMap[userMessageId] = userMessage;
+    messageMap[assistantMessageId] = assistantMessage;
     
-    // Update conversation
-    conversation.lastMessageId = assistantMessageId;
+    // Create conversation
+    const conversation: Conversation = {
+      id: conversationId,
+      title: "New Conversation",
+      createTime: Date.now(),
+      lastMessageId: assistantMessageId,
+      botId: null,
+      userId: null,
+      shouldContinue: false,
+      messageMap: messageMap
+    };
+    
+    // Store everything
+    this.messages.set(userMessageId, userMessage);
+    this.messages.set(assistantMessageId, assistantMessage);
+    this.conversations.set(conversationId, conversation);
     
     return {
       conversationId,
       message: {
-        id: messageId
+        id: userMessageId
       }
     };
   }
 
   async addMessageToConversation(conversationId: string, message: any): Promise<any> {
+    // Get existing conversation
     const conversation = this.conversations.get(conversationId);
     if (!conversation) {
       throw new Error("Conversation not found");
     }
     
-    // Add user message
-    const messageId = `msg_${Date.now()}`;
+    // Generate IDs
+    const userMessageId = `msg_${Date.now()}`;
+    const assistantMessageId = `msg_${Date.now() + 1}`;
+    
+    // Extract user input
+    const userInput = message.content[0].body;
+    
+    // Create user message
     const userMessage: Message = {
-      id: messageId,
+      id: userMessageId,
       conversationId,
       role: 'user',
-      content: message.content[0].body,
-      createTime: new Date()
+      content: userInput,
+      createTime: Date.now()
     };
     
-    this.messages.set(messageId, userMessage);
+    // Generate assistant response
+    const responseContent = this.generateMockResponse(userInput);
     
-    // Mock assistant response
-    const assistantMessageId = `msg_${Date.now() + 1}`;
+    // Create assistant message
     const assistantMessage: Message = {
       id: assistantMessageId,
       conversationId,
       role: 'assistant',
-      content: "Here's my response to your latest message. What other questions do you have?",
-      createTime: new Date()
+      content: responseContent,
+      createTime: Date.now()
     };
     
+    // Update message map
+    if (!conversation.messageMap) {
+      conversation.messageMap = {};
+    }
+    conversation.messageMap[userMessageId] = userMessage;
+    conversation.messageMap[assistantMessageId] = assistantMessage;
+    
+    // Store messages
+    this.messages.set(userMessageId, userMessage);
     this.messages.set(assistantMessageId, assistantMessage);
     
     // Update conversation
     conversation.lastMessageId = assistantMessageId;
+    this.conversations.set(conversationId, conversation);
     
     return {
       conversationId,
       message: {
-        id: messageId
+        id: userMessageId
       }
     };
   }
