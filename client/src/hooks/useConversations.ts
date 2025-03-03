@@ -83,7 +83,10 @@ export function useConversations(
 
       const payload: ChatInputWithoutBotId = {
         conversationId: activeConversationId,
-        message: textContent,
+        message: {
+          ...textContent,
+          model: selectedModel
+        },
       };
 
       const response = await apiRequest('post', '/conversation', payload);

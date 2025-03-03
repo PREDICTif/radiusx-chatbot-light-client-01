@@ -46,6 +46,7 @@ export type ContentItem = TextContent | ImageContent | AttachmentContent;
 export interface MessageInputWithoutMessageId {
   content: ContentItem[];
   role: 'user' | 'assistant';
+  model?: ModelType;
 }
 
 export interface ChatInputWithoutBotId {
