@@ -31,6 +31,7 @@ export async function apiRequest(
 export async function claudeApiRequest(
   prompt: string,
   model: ModelType,
+  conversationId: string | null = null
 ): Promise<Response> {
   if (!config.api.apiKey) {
     throw new Error('API key is not configured');
@@ -45,10 +46,16 @@ export async function claudeApiRequest(
   
   // Format the request based on Claude API requirements
   const requestBody = {
-    model: model,
-    prompt: prompt,
-    temperature: 0.7,
-    max_tokens: 1024,
+    conversationId: conversationId,
+    message: {
+      content: [
+        {
+          contentType: "text",
+          body: prompt
+        }
+      ],
+      model: model
+    }
   };
   
   const res = await fetch(url, {

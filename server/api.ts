@@ -17,6 +17,10 @@ export class ClaudeApi {
     this.endpoint = config.api.endpoint;
     this.headerName = config.api.headerName;
     this.useMockResponses = config.features.useMockResponses;
+    
+    // Log configuration for debugging
+    console.log(`Claude API initialized with endpoint: ${this.endpoint}`);
+    console.log(`Using mock responses: ${this.useMockResponses ? 'Yes' : 'No'}`);
   }
   
   /**

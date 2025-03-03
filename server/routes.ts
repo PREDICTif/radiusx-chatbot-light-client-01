@@ -56,6 +56,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chat endpoint - compatible with front-end
+  app.post('/api/chat', async (req, res) => {
+    try {
+      const { conversationId, message } = req.body;
+      
+      if (conversationId) {
+        // Add to existing conversation
+        const result = await storage.addMessageToConversation(conversationId, message);
+        res.json(result);
+      } else {
+        // Create new conversation
+        const result = await storage.createConversation(message);
+        res.json(result);
+      }
+    } catch (err) {
+      console.error('Error in /api/chat:', err);
+      res.status(500).json({ message: 'Failed to create conversation or send message' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
